@@ -18,7 +18,7 @@ The side branch responsible for focusing the attention of the classifier net on 
 As shown in Figure 2.b attention focusing is done by modifying the features map of the image classification branch in several different layers according to the following steps:
 1. For each layer, the ROI mask is resized to the size of the features map produce by that layer.
 2. For each resized ROI mask two convolution layers (+bias) are applied to generate two attentions maps in the same size and depth of the corresponding feature map.
-   the first of this attention maps is multiplied element-wise with the feature map while the second map is added element-wise to resulting maps.
+   The first of this attention maps is multiplied element-wise with the feature map while the second map is added element-wise to resulting maps.
 3. The result normalized feature map is used as an input for the next layer of the classification net.
 ### Net Weight initiation
 For training: the weights of the image classification were initiated using Resnet 50 weight pre-trained on the Imagenet.  
