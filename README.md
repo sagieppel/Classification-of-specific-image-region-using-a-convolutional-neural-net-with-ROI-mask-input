@@ -6,7 +6,7 @@ Given an image and region of interest (ROI) mask as input, the net classifies th
 Figure 1. Segment-specific Classification using CNN
 
 For example, in Figure 1  the net is given the same image twice with different masks and output the object class of the segment marked by each mask.
-Weights file of model trained on the 80 categories of the coco dataset is supplied.
+
 
 
 ![](/Figure2.png)
