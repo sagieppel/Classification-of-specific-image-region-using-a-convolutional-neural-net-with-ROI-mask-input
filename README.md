@@ -1,6 +1,6 @@
 # Classification of specific image region using a convolutional neural net with ROI mask input
 
-Given an image and region of interest (ROI) mask as input, the net classifies the region of the image marked in the input mask. 
+Given an image and region of interest (ROI) mask as input, the net classifies the region of the image marked in the mask. 
 
 ![](/Figure1.png)
 Figure 1. Segment-specific Classification using CNN
