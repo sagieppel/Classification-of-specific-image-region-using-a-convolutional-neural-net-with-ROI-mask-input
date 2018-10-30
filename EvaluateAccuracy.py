@@ -45,8 +45,8 @@ Net.eval()
 CorCatPred=np.zeros([Reader.NumCats],dtype=np.float64) # Counter of correct class prediction
 
 for c in range(Reader.NumCats): # Go over all classes and calculate accuracy
-    #  print("Class "+str(c)+") "+Reader.CatNames[c])
-      for m in range(np.min((SamplePerClass,len(Reader.ImgIds)))): # Go over images
+      #print("Class "+str(c)+") "+Reader.CatNames[c])
+      for m in range(np.min((SamplePerClass,len(Reader.ImgIds[c])))): # Go over images
             Images,SegmentMask,Labels, LabelsOneHot=Reader.ReadSingleImageAndClass(ClassNum=c,ImgNum=m) #Load Data
             Prob, PredLb = Net.forward(Images, ROI=SegmentMask,EvalMode=True)  # Run net inference and get prediction
             PredLb = np.array(PredLb.data)
