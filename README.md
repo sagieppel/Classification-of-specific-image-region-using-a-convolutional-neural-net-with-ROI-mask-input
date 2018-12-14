@@ -7,7 +7,9 @@ Figure 1. Segment-specific Classification using CNN
 
 For example, in Figure 1  the net is given the same image twice with different masks and output the object class of the segment marked by each mask.
 
+This net achive 83% accuracy on the coco objects data set.
 
+For more details see [Classifying a specific image region using convolutional nets with an ROI mask as input](https://arxiv.org/pdf/1812.00291.pdf)
 
 ![](/Figure2.png)
 Figure 2.a Standard Classification net, b. Region specific classification net
@@ -61,9 +63,5 @@ This network was run with [Python 3.6 Anaconda](https://www.anaconda.com/downloa
 4. Set the path to the coco Train annotation json file in: TestAnnotationFile
 5. Run the script
 
-
-# Results
-
-Trained net give about 85% mean class accuracy on the coco evaluation set
 
 
