@@ -49,8 +49,8 @@ for c in range(Reader.NumCats): # Go over all classes and calculate accuracy
       for m in range(np.min((SamplePerClass,len(Reader.ImgIds[c])))): # Go over images
             Images,SegmentMask,Labels, LabelsOneHot=Reader.ReadSingleImageAndClass(ClassNum=c,ImgNum=m) #Load Data
             Prob, PredLb = Net.forward(Images, ROI=SegmentMask,EvalMode=True)  # Run net inference and get prediction
-            PredLb = np.array(PredLb.data)
-            Prob = np.array(Prob.data)
+            PredLb = PredLb.data.cpu().numpy()
+            Prob = Prob.data.cpu().numpy()
             if PredLb[0]==Labels[0]: CorCatPred[c]+=1 # Check if prediction is correct
             # print("Real Label " +Reader.CatNames[Labels[0]]+" Predcicted Label "+Reader.CatNames[PredLb[0]])
             # print("Predicted Label Prob="+str(Prob[0,PredLb[0]])+  " Real Label predicted prob="+str(Prob[0,Labels[0]]))
