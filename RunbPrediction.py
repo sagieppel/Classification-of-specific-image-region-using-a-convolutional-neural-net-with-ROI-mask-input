@@ -41,8 +41,8 @@ Images=np.expand_dims(Images,axis=0)
 ROIMask=np.expand_dims(ROIMask,axis=0)
 #-------------------Run Prediction----------------------------------------------------------------------------
 Prob, PredLb = Net.forward(Images, ROI=ROIMask,EvalMode=True)  # Run net inference and get prediction
-PredLb = np.array(PredLb.data)
-Prob = np.array(Prob.data)
+PredLb = PredLb.data.cpu().numpy()
+Prob = Prob.data.cpu().numpy()
 #---------------Print Prediction on screen--------------------------------------------------------------------------
 print("Predicted Label " + CatNames[PredLb[0]])
 print("Predicted Label Prob="+str(Prob[0,PredLb[0]]*100)+"%")
