@@ -12,7 +12,7 @@ This net achive 83% accuracy on the coco objects data set.
 For more details see [Classifying a specific image region using convolutional nets with an ROI mask as input](https://arxiv.org/pdf/1812.00291.pdf)
 
 
-[*Stronger but harder to trai/use version of this net can be found here](https://github.com/sagieppel/Generator-evaluator-selector-net-a-modular-approach-for-panoptic-segmentation/tree/master/Classification)
+[## *Stronger but harder to trai/use version of this net can be found here](https://github.com/sagieppel/Generator-evaluator-selector-net-a-modular-approach-for-panoptic-segmentation/tree/master/Classification)
 
 
 ![](/Figure2.png)
