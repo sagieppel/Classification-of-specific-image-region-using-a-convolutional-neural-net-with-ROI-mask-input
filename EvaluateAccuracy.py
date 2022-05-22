@@ -24,9 +24,10 @@ import numpy as np
 
 #...........................................Input Parameters.................................................
 
-Trained_model_path="logs/WeightsRegionSpecificClassification.torch" # Weights for Pretrained net
-TestImageDir='/media/sagi/9be0bc81-09a7-43be-856a-45a5ab241d90/Data_zoo/COCO/val2014/' #COCO evaluation image dir
-TestAnnotationFile = '/media/sagi/9be0bc81-09a7-43be-856a-45a5ab241d90/Data_zoo/COCO/annotations/instances_val2014.json' # COCO Val annotation file
+Trained_model_path="logs/88000.torch" # Weights for Pretrained net
+TestImageDir='/media/breakeroftime/2T/Data_zoo/coco/val2017/' # Path to coco images
+TestAnnotationFile = '/media/breakeroftime/2T/Data_zoo/coco/annotations/instances_val2017.json' # Path to coco instance annotation file
+
 EvaluationFile="PrecisionStatistics.xls"
 SamplePerClass=2
 UseCuda=True
@@ -36,8 +37,8 @@ Reader=COCOReader.COCOReader(TestImageDir,TestAnnotationFile)
 NumClasses = Reader.NumCats
 
 #---------------------Initiate neural net------------------------------------------------------------------------------------
-Net=Net.Net(NumClasses=NumClasses,UseGPU=UseCuda)
-Net.AddAttententionLayer() #Load attention layers
+Net=Net.Net(NumClasses=NumClasses)
+
 
 Net.load_state_dict(torch.load(Trained_model_path)) #load weights
 if UseCuda: Net.cuda()
@@ -68,8 +69,8 @@ for c in range(Reader.NumCats):
             for i in range(BatchSize):
               #    print(i)
                   # ..................................................................
-                  Prob, Lb = Net.forward(Images[i:i + 1], ROI=SegmentMask[i:i + 1],
-                                         EvalMode=True)  # Run net inference and get prediction
+                  with torch.no_grad():
+                       Prob, Lb = Net.forward(Images[i:i + 1], ROI=SegmentMask[i:i + 1])  # Run net inference and get prediction
                   PredLb = Lb.data.cpu().numpy()
                   # .......................................................................................
                   LbSize = SegmentMask[i].sum()

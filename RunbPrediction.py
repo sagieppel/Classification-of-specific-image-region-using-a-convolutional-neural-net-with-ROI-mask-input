@@ -42,7 +42,8 @@ plt.show()
 Images=np.expand_dims(Images,axis=0)
 ROIMask=np.expand_dims(ROIMask,axis=0)
 #-------------------Run Prediction----------------------------------------------------------------------------
-Prob, PredLb = Net.forward(Images, ROI=ROIMask)  # Run net inference and get prediction
+with torch.no_grad(): # no gradient needed
+   Prob, PredLb = Net.forward(Images, ROI=ROIMask)  # Run net inference and get prediction
 PredLb = PredLb.data.cpu().numpy()
 Prob = Prob.data.cpu().numpy()
 #---------------Print Prediction on screen--------------------------------------------------------------------------
