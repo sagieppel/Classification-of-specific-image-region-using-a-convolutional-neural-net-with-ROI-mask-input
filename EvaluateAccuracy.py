@@ -24,10 +24,11 @@ import numpy as np
 
 #...........................................Input Parameters.................................................
 
-Trained_model_path="logs/ModelWeightCOCOMaskRegionClassification.torch" # Weights for Pretrained net
+Trained_model_path="logs/WeightsRegionSpecificClassification.torch" # Weights for Pretrained net
 TestImageDir='/media/sagi/9be0bc81-09a7-43be-856a-45a5ab241d90/Data_zoo/COCO/val2014/' #COCO evaluation image dir
 TestAnnotationFile = '/media/sagi/9be0bc81-09a7-43be-856a-45a5ab241d90/Data_zoo/COCO/annotations/instances_val2014.json' # COCO Val annotation file
-SamplePerClass=10
+EvaluationFile="PrecisionStatistics.xls"
+SamplePerClass=2
 UseCuda=True
 
 #---------------------Create reader for data set--------------------------------------------------------------------------------------------------------------
@@ -42,27 +43,87 @@ Net.load_state_dict(torch.load(Trained_model_path)) #load weights
 if UseCuda: Net.cuda()
 Net.eval()
 #--------------------Evaluate net accuracy---------------------------------------------------------------------------------
-CorCatPred=np.zeros([Reader.NumCats],dtype=np.float64) # Counter of correct class prediction
+#===============================Sizes bins============================================================================================
+Sizes=[1000,2000,4000,8000,16000,32000,64000,128000,256000,500000,1000000] #sizes pixels
+NumSizes=len(Sizes)
+#--------------------Evaluate net accuracy---------------------------------------------------------------------------------
+TP=np.zeros([Reader.NumCats+1],dtype=np.float64) # True positive per class
+FP=np.zeros([Reader.NumCats+1],dtype=np.float64) # False positive per class
+FN=np.zeros([Reader.NumCats+1],dtype=np.float64) # False Negative per class
+SumPred=np.zeros([Reader.NumCats+1],dtype=np.float64) #SumCases Per class
 
-for c in range(Reader.NumCats): # Go over all classes and calculate accuracy
-      #print("Class "+str(c)+") "+Reader.CatNames[c])
-      for m in range(np.min((SamplePerClass,len(Reader.ImgIds[c])))): # Go over images
-            Images,SegmentMask,Labels, LabelsOneHot=Reader.ReadSingleImageAndClass(ClassNum=c,ImgNum=m) #Load Data
-            Prob, PredLb = Net.forward(Images, ROI=SegmentMask,EvalMode=True)  # Run net inference and get prediction
-            PredLb = PredLb.data.cpu().numpy()
-            Prob = Prob.data.cpu().numpy()
-            if PredLb[0]==Labels[0]: CorCatPred[c]+=1 # Check if prediction is correct
-            # print("Real Label " +Reader.CatNames[Labels[0]]+" Predcicted Label "+Reader.CatNames[PredLb[0]])
-            # print("Predicted Label Prob="+str(Prob[0,PredLb[0]])+  " Real Label predicted prob="+str(Prob[0,Labels[0]]))
-            # Images[:, :, :, 0] *= SegmentMask
-            # misc.imshow(Images[0])
+SzTP=np.zeros([Reader.NumCats+1,NumSizes],dtype=np.float64) # True positive per class per size
+SzFP=np.zeros([Reader.NumCats+1,NumSizes],dtype=np.float64) # False positive per class per size
+SzFN=np.zeros([Reader.NumCats+1,NumSizes],dtype=np.float64) # False Negative per class per size
+SzSumPred=np.zeros([Reader.NumCats+1,NumSizes],dtype=np.float64)
+#--------------------Evaluate net accuracy---------------------------------------------------------------------------------
+CorCatPred=np.zeros([Reader.NumCats],dtype=np.float64) # Counter of currect class prediction
+TotalCat=np.zeros([Reader.NumCats],dtype=np.float64)
+for c in range(Reader.NumCats):
+      print("Class "+str(c)+") "+Reader.CatNames[c]+"Num Casses "+str(np.min((SamplePerClass,len(Reader.ImgIds[c])))))
+      for m in range(np.min((SamplePerClass,len(Reader.ImgIds[c])))):
+            Images,SegmentMask,Labels, LabelsOneHot=Reader.ReadSingleImageAndClass(ClassNum=c,ImgNum=m)
+            print("Class " + str(c) + ") " + Reader.CatNames[c]+"  "+str(m))
+            BatchSize = Images.shape[0]
+            for i in range(BatchSize):
+              #    print(i)
+                  # ..................................................................
+                  Prob, Lb = Net.forward(Images[i:i + 1], ROI=SegmentMask[i:i + 1],
+                                         EvalMode=True)  # Run net inference and get prediction
+                  PredLb = Lb.data.cpu().numpy()
+                  # .......................................................................................
+                  LbSize = SegmentMask[i].sum()
+                  SzInd = -1
+                  for f, sz in enumerate(Sizes):
+                        if LbSize < sz:
+                              SzInd = f
+                              break
 
-      CorCatPred[c]/=np.min((SamplePerClass,len(Reader.ImgIds))) #Calculate class prediction accuracy
-      print("Class " + str(c) + ") " + Reader.CatNames[c] + "\t" +str(CorCatPred[c]*100)+"%")
-print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-print("Mean Classes accuracy \t" + str(CorCatPred.mean()*100)+"%") # Calculate mean accuracy for all classes
-print("Number of samples per class\t"+str(SamplePerClass))
+                  if PredLb[0] == Labels[i]:
+                        #   print("Correct")
+                        TP[Labels[i]] += 1
+                        SzTP[Labels[i], SzInd] += 1
+                  else:
+                        #     print("Wrong")
+                        FN[Labels[i]] += 1
+                        FP[PredLb[0]] += 1
+                        SzFN[Labels[i], SzInd] += 1
+                        SzFP[PredLb[0], SzInd] += 1
+                  SumPred[Labels[i]] += 1
+                  SzSumPred[Labels[i], SzInd] += 1
+                  # Images[i,:,:,0]*=1-SegmentMask[i]
+                  # print("Real Label " + str(Reader.MaterialDict[Labels[i]]) + "   Predicted " + str(Reader.MaterialDict[PredLb[0]]))
+                  # misc.imshow(Images[i])
+                  #  print("I love beer mister hazir")
 
+# =====================================================================================================
+f = open(EvaluationFile, "w")
 
-#--------------------------- Create files for saving loss----------------------------------------------------------------------------------------------------------
+NrmF = len(SumPred) / (np.sum(SumPred > 0))  # Normalization factor for classes with zero occurrences
 
+txt = "Mean Accuracy All Class Average =\t" + str(
+      (TP / (SumPred + 0.00000001)).mean() * NrmF * 100) + "%" + "\r\n"
+print(txt)
+f.write(txt)
+
+txt = "Mean Accuracy Images =\t" + str((TP.mean() / SumPred.mean()) * 100) + "%" + "\r\n"
+print(txt)
+f.write(txt)
+
+print("\r\n=============================================================================\r\n")
+print(txt)
+f.write(txt)
+
+txt = "SizeMax\tMeanClasses\tMeanGlobal\tNum Instances\tNumValidClasses\r\n"
+print(txt)
+f.write(txt)
+for i, sz in enumerate(Sizes):
+      if SzSumPred[:, i].sum() == 0: continue
+      NumValidClass = np.sum(SzSumPred[:, i] > 0)
+      NrmF = len(SzSumPred[:, i]) / NumValidClass  # Normalization factor for classes with zero occurrences
+      txt = str(sz) + "\t" + str((SzTP[:, i] / (SzSumPred[:, i] + 0.00001)).mean() * NrmF * 100) + "%\t" + str(
+            100 * (SzTP[:, i]).mean() / (SzSumPred[:, i].mean())) + "%\t" + str(
+            SzSumPred[:, i].sum()) + "\t" + str(NumValidClass) + "\r\n"
+      print(txt)
+      f.write(txt)
+f.close()

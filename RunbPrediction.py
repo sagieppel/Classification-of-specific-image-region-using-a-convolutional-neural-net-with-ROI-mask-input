@@ -6,41 +6,43 @@
 # 4. Set the path to the coco Train annotation json file in: TestAnnotationFile
 # 5. Run the script
 ##########################################################################################################################################################################
+import time
 
 import numpy as np
 import Resnet50Attention as Net
 import os
-import scipy.misc as misc
+import matplotlib.pyplot as plt
 import torch
 import GetCOCOCatNames
 import numpy as np
-
+import cv2
 #...........................................Input Parameters.................................................
 
-Trained_model_path="logs/ModelWeightCOCOMaskRegionClassification.torch" # Pretrained model
+Trained_model_path="logs/88000.torch" # Pretrained model
 ImageFile='TestImages/Test4/Image.png' #Input image
 ROIMaskFile= 'TestImages/Test4/InputMask4.png' # Input ROI mas
 UseCuda=True
 #---------------------Get list of coco classes-----------------------------------------------------------------------------
 CatNames=GetCOCOCatNames.GetCOCOCatNames()
 #---------------------Initiate neural net------------------------------------------------------------------------------------
-Net=Net.Net(NumClasses=CatNames.__len__(),UseGPU=UseCuda)
-Net.AddAttententionLayer()
+Net=Net.Net(NumClasses=CatNames.__len__())
+
 
 Net.load_state_dict(torch.load(Trained_model_path)) #Load net
 if UseCuda: Net.cuda()
 Net.eval()
 #--------------------Read Image and segment mask---------------------------------------------------------------------------------
-Images=misc.imread(ImageFile)
-ROIMask=misc.imread(ROIMaskFile)
+Images=cv2.imread(ImageFile)
+ROIMask=cv2.imread(ROIMaskFile,0)
 
-misc.imshow(Images) # Display image
-misc.imshow(ROIMask*255) # Disply ROI mask
-
+imgplot = plt.imshow(Images)
+plt.show()
+imgplot=plt.imshow(ROIMask*255) # Disply ROI mask
+plt.show()
 Images=np.expand_dims(Images,axis=0)
 ROIMask=np.expand_dims(ROIMask,axis=0)
 #-------------------Run Prediction----------------------------------------------------------------------------
-Prob, PredLb = Net.forward(Images, ROI=ROIMask,EvalMode=True)  # Run net inference and get prediction
+Prob, PredLb = Net.forward(Images, ROI=ROIMask)  # Run net inference and get prediction
 PredLb = PredLb.data.cpu().numpy()
 Prob = Prob.data.cpu().numpy()
 #---------------Print Prediction on screen--------------------------------------------------------------------------
